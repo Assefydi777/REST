@@ -1,4 +1,4 @@
-from fastapi  import FastAPI,Query
+from fastapi  import FastAPI,Query, HTTPException
 from pydantic import BaseModel
 from typing   import Optional 
 import json
@@ -12,7 +12,7 @@ class Person(BaseModel):
     gender:str
 
 with open('people.json','r') as f:
-    people = json.load(f)['people']
+    people = json.load(f)
 
 @app.get('/person/{p_id}')
 def get_person(p_id:int):
@@ -37,7 +37,7 @@ def search_person(age: Optional[int]=Query(None, title="Age", description="The a
             combined = [p for p in people1 if p in people2]
             return combined
 
-@app.post('/adding',status_code=201)
+@app.post('/addPerson',status_code=201)
 def add_person(person: Person):
     p_id=max([p['id'] for p in people])+1
     new_person = {
@@ -48,8 +48,27 @@ def add_person(person: Person):
     }
 
     people.append(new_person)
-
+                                              
     with open ("people.json", 'w') as f:
         json.dump(people, f)
 
-    return  new_person
+    return  new_person   
+
+@app.put('/changePerson',status_code=204)
+def change_person(person:Person):
+    new_person = {
+        "id":person.id,
+        "name":person.name,
+        "age":person.age,
+        "gender":person.gender
+    }
+
+    person_list=[p for p in people if p['id']==person.id]
+    if len(person_list) > 0:
+        people.remove(person_list[0])
+        people.append(new_person)
+        with open('people.json','w')as f:
+            json.dump(people,f)
+        return new_person
+    else:
+        return HTTPException(status_code=404,detail=f"Person with id {person.id}does not exist")
