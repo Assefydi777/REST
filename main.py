@@ -1,4 +1,4 @@
-from fastapi  import FastAPI,Query, HTTPException
+from fastapi  import FastAPI,Query, HTTPException, Path
 from pydantic import BaseModel
 from typing   import Optional 
 import json
@@ -72,3 +72,19 @@ def change_person(person:Person):
         return new_person
     else:
         return HTTPException(status_code=404,detail=f"Person with id {person.id}does not exist")
+    
+@app.delete('/deletePerson/{p_id}',status_code=204)
+def delete_person(p_id:int):
+    person=[p for p in people if p['id']==p_id]
+    if len(person) > 0:
+        people.remove(person[0])
+        with open ('people.json','w') as f:
+            json.dump(people,f)
+    else:
+        raise HTTPException(status_code=404, detail=f"There is no person with id{p_id}.") 
+    
+
+#* def changename(name:str):
+   # person=[p for p in people if p['name']==name]
+   # if len(person)>0:
+   #     people.remove(pe)
